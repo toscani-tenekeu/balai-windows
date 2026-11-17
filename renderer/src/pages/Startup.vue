@@ -64,7 +64,7 @@ function toggle(item: StartupItem, enabled: boolean) {
           </TableHeader>
           <TableBody>
             <TableRow v-for="item in data" :key="item.id">
-              <TableCell class="max-w-xl">
+              <TableCell class="w-full max-w-0">
                 <p class="truncate font-medium">{{ item.name }}</p>
                 <p class="text-muted-foreground truncate font-mono text-xs" :title="item.command">{{ item.command }}</p>
               </TableCell>

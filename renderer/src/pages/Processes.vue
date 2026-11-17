@@ -91,7 +91,7 @@ async function confirm() {
         </TableHeader>
         <TableBody>
           <TableRow v-for="item in visible" :key="item.pid">
-            <TableCell class="max-w-80 pl-4">
+            <TableCell class="w-full max-w-0 pl-4">
               <p class="truncate font-medium">{{ item.name }}</p>
               <p class="text-muted-foreground truncate font-mono text-xs" :title="item.path">{{ item.path }}</p>
             </TableCell>

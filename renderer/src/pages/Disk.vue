@@ -161,7 +161,7 @@ async function remove() {
         </TableHeader>
         <TableBody :class="loading ? 'opacity-50' : ''">
           <TableRow v-for="entry in usage.entries" :key="entry.path">
-            <TableCell class="max-w-80">
+            <TableCell class="w-1/2 max-w-0">
               <Button v-if="entry.directory" variant="link" class="h-auto max-w-full justify-start p-0" @click="open(entry.path)">
                 <FolderIcon data-icon="inline-start" />
                 <span class="truncate">{{ entry.name }}</span>

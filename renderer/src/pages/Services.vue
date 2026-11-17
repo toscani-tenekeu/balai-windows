@@ -126,7 +126,7 @@ async function act(service: ServiceInfo, action: Action) {
         </TableHeader>
         <TableBody>
           <TableRow v-for="item in visible" :key="item.name">
-            <TableCell class="max-w-[28rem] pl-4">
+            <TableCell class="w-full max-w-0 pl-4">
               <p class="truncate font-medium">{{ item.display }}</p>
               <p class="text-muted-foreground truncate text-xs" :title="item.description">
                 {{ item.name }}<template v-if="item.description"> · {{ item.description }}</template>
@@ -135,7 +135,7 @@ async function act(service: ServiceInfo, action: Action) {
             <TableCell>
               <StatusBadge :tone="item.state === 'Running' ? 'good' : 'idle'">{{ item.state }}</StatusBadge>
             </TableCell>
-            <TableCell class="text-muted-foreground">{{ startLabel(item) }}</TableCell>
+            <TableCell class="text-muted-foreground whitespace-nowrap">{{ startLabel(item) }}</TableCell>
             <TableCell class="pr-4">
               <Spinner v-if="busy === item.name" class="mx-auto" />
               <DropdownMenu v-else>

@@ -237,7 +237,7 @@ async function remove() {
                 :aria-label="`Select ${file.path}`"
               />
             </TableCell>
-            <TableCell class="max-w-xl">
+            <TableCell class="w-full max-w-0">
               <span class="flex items-center gap-2">
                 <span class="truncate font-mono text-xs" :title="file.path">{{ file.path }}</span>
                 <StatusBadge v-if="file.locked" tone="idle">System</StatusBadge>

@@ -191,6 +191,7 @@ export async function selfTest(output: string, origin: string): Promise<number> 
     for (const page of pages) {
       await window.loadURL(`${origin}${page}`).catch((error: Error) => problems.push(error.message))
       if (page === 'disk') {
+        await new Promise((resolve) => setTimeout(resolve, 6_000))
         await window.webContents.executeJavaScript(
           "[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Open')?.click()",
         )

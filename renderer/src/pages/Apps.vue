@@ -147,11 +147,11 @@ onBeforeUnmount(() => clearInterval(timer))
             </TableHeader>
             <TableBody>
               <TableRow v-for="item in visible" :key="item.id">
-                <TableCell class="max-w-96 pl-4">
+                <TableCell class="w-full max-w-0 pl-4">
                   <p class="truncate font-medium">{{ item.name }}</p>
                   <p class="text-muted-foreground truncate text-xs">{{ item.publisher }}<template v-if="item.publisher"> · </template>{{ item.scope }}</p>
                 </TableCell>
-                <TableCell class="text-muted-foreground max-w-40 truncate font-mono text-xs">{{ item.version }}</TableCell>
+                <TableCell class="text-muted-foreground max-w-32 truncate font-mono text-xs">{{ item.version }}</TableCell>
                 <TableCell class="text-muted-foreground whitespace-nowrap">{{ item.installed }}</TableCell>
                 <TableCell class="text-right tabular-nums">{{ item.size ? bytes(item.size) : '' }}</TableCell>
                 <TableCell class="pr-4 text-right">
@@ -218,7 +218,7 @@ onBeforeUnmount(() => clearInterval(timer))
               </TableHeader>
               <TableBody>
                 <TableRow v-for="item in updates.updates" :key="item.id">
-                  <TableCell class="max-w-96">
+                  <TableCell class="w-full max-w-0">
                     <p class="truncate font-medium">{{ item.name }}</p>
                     <p class="text-muted-foreground truncate font-mono text-xs">{{ item.id }}</p>
                   </TableCell>

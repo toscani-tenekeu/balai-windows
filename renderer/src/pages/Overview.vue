@@ -68,7 +68,7 @@ const summary = computed(() => {
       </Card>
       <Card v-for="drive in overview.drives.slice(0, 2)" :key="drive.letter">
         <CardHeader>
-          <CardDescription>Drive {{ drive.letter }} {{ drive.label }}</CardDescription>
+          <CardDescription class="truncate">Drive {{ drive.letter }} {{ drive.label }}</CardDescription>
           <CardTitle class="text-2xl tabular-nums">{{ percent(drive.percent) }}</CardTitle>
         </CardHeader>
         <CardContent class="flex flex-col gap-2">

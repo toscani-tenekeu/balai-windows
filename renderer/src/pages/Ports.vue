@@ -28,6 +28,8 @@ const pending = ref<{ listener: Listener; action: Action } | null>(null)
 
 const visible = computed(() => (data.value ?? []).filter((item) => item.protocol === protocol.value))
 const single = (item: Listener) => (item.services.length === 1 ? item.services[0]! : null)
+const REMOTE: Record<number, string> = { 22: 'SSH', 3389: 'Remote Desktop', 5985: 'WinRM', 5986: 'WinRM' }
+
 const windowsOwned = (item: Listener) => item.pid <= 4 || (item.process === 'svchost' && item.services.length !== 1)
 
 const dialog = computed(() => {
@@ -101,7 +103,7 @@ async function confirm() {
           <TableRow v-for="item in visible" :key="`${item.protocol}-${item.address}-${item.port}`">
             <TableCell class="font-medium tabular-nums">{{ item.port }}</TableCell>
             <TableCell class="font-mono text-xs">{{ item.address }}</TableCell>
-            <TableCell class="max-w-72">
+            <TableCell class="w-full max-w-0">
               <p class="truncate">
                 {{ item.process || 'Unknown' }} <span class="text-muted-foreground text-xs">({{ item.pid }})</span>
               </p>
@@ -143,7 +145,12 @@ async function confirm() {
     <AlertDialogContent v-if="dialog">
       <AlertDialogHeader>
         <AlertDialogTitle>{{ dialog.title }}</AlertDialogTitle>
-        <AlertDialogDescription>{{ dialog.text }}</AlertDialogDescription>
+        <AlertDialogDescription>
+          {{ dialog.text }}
+          <template v-if="pending && pending.action !== 'restart-service' && REMOTE[pending.listener.port]">
+            This is {{ REMOTE[pending.listener.port] }}: anyone connected to this computer remotely through it is cut off.
+          </template>
+        </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
