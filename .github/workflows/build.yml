@@ -1,0 +1,75 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Build installer
+        run: npm run dist
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Self-test on Windows
+        timeout-minutes: 15
+        shell: pwsh
+        run: |
+          $out = Join-Path $PWD 'selftest.json'
+          $p = Start-Process -FilePath 'release\win-unpacked\Balai.exe' -ArgumentList "--self-test=$out" -Wait -PassThru
+          if (Test-Path $out) {
+            $r = Get-Content $out -Raw | ConvertFrom-Json
+            foreach ($name in $r.report.PSObject.Properties.Name) {
+              $c = $r.report.$name
+              $mark = if ($c.ok) { 'PASS' } else { 'FAIL' }
+              Write-Host ("{0}  {1,-20} {2,6} ms  {3}" -f $mark, $name, $c.ms, $(if ($c.ok) { '' } else { $c.error }))
+            }
+          } else { Write-Host 'No report was written.' }
+          if ($p.ExitCode -ne 0) { throw "Self-test failed with exit code $($p.ExitCode)" }
+
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selftest
+          path: selftest.json
+          if-no-files-found: ignore
+
+      - name: Keep the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer
+          path: |
+            release/Balai-Setup.exe
+            release/Balai-Setup.exe.blockmap
+            release/latest.yml
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $notes = git tag -l --format='%(contents)' $tag
+          if (-not $notes) { $notes = "Balai $tag" }
+          gh release create $tag release/Balai-Setup.exe release/Balai-Setup.exe.blockmap release/latest.yml --title "Balai $($tag.TrimStart('v'))" --notes "$notes"

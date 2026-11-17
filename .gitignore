@@ -1,0 +1,6 @@
+node_modules/
+dist/
+release/
+selftest.json
+*.log
+.DS_Store
