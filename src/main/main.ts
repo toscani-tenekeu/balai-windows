@@ -1,5 +1,5 @@
 import { app, BrowserWindow, Menu, nativeTheme, net, protocol, shell } from 'electron'
-import { existsSync } from 'node:fs'
+import { appendFileSync, existsSync } from 'node:fs'
 import { join, normalize } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { api, json } from './api'
@@ -24,7 +24,21 @@ protocol.registerSchemesAsPrivileged([
 
 const testOutput = process.argv.find((arg) => arg.startsWith('--self-test='))?.slice('--self-test='.length)
 
-if (!testOutput && !app.requestSingleInstanceLock()) app.quit()
+if (testOutput) {
+  // A self-test has no window to show an error in, so failures go to a file next to the report.
+  const report = (error: unknown) => {
+    try {
+      appendFileSync(`${testOutput}.error`, `${error instanceof Error ? error.stack : String(error)}\n`)
+    } catch {
+      // Nothing more can be done.
+    }
+    app.exit(2)
+  }
+  process.on('uncaughtException', report)
+  process.on('unhandledRejection', report)
+} else if (!app.requestSingleInstanceLock()) {
+  app.quit()
+}
 
 app.setAppUserModelId('com.toscanitenekeu.balai')
 Menu.setApplicationMenu(null)

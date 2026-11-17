@@ -35,7 +35,11 @@ jobs:
         shell: pwsh
         run: |
           $out = Join-Path $PWD 'selftest.json'
-          $p = Start-Process -FilePath 'release\win-unpacked\Balai.exe' -ArgumentList "--self-test=$out" -Wait -PassThru
+          $log = Join-Path $PWD 'electron.log'
+          $env:ELECTRON_ENABLE_LOGGING = '1'
+          $p = Start-Process -FilePath 'release\win-unpacked\Balai.exe' -ArgumentList "--self-test=$out", '--enable-logging=file', "--log-file=$log" -Wait -PassThru
+          if (Test-Path "$out.error") { Write-Host '--- startup error'; Get-Content "$out.error" | Write-Host }
+          if (Test-Path $log) { Write-Host '--- electron log'; Get-Content $log -Tail 60 | Write-Host }
           if (Test-Path $out) {
             $r = Get-Content $out -Raw | ConvertFrom-Json
             foreach ($name in $r.report.PSObject.Properties.Name) {
@@ -51,7 +55,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: selftest
-          path: selftest.json
+          path: |
+            selftest.json
+            selftest.json.error
+            electron.log
           if-no-files-found: ignore
 
       - name: Keep the installer
