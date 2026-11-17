@@ -25,6 +25,10 @@ protocol.registerSchemesAsPrivileged([
 const testOutput = process.argv.find((arg) => arg.startsWith('--self-test='))?.slice('--self-test='.length)
 
 if (testOutput) {
+  // Test machines have no usable GPU, and the test does not need one.
+  app.disableHardwareAcceleration()
+  app.commandLine.appendSwitch('disable-gpu')
+  app.commandLine.appendSwitch('disable-gpu-sandbox')
   // A self-test has no window to show an error in, so failures go to a file next to the report.
   const report = (error: unknown) => {
     try {
@@ -113,13 +117,14 @@ app.whenReady().then(async () => {
   openDatabase(app.getPath('userData'))
   protectPaths([app.getPath('userData'), join(process.execPath, '..')])
 
+  protocol.handle('app', handle)
+
   if (testOutput) {
-    const code = await selfTest(testOutput)
+    const code = await selfTest(testOutput, `${ORIGIN}/`)
     app.exit(code)
     return
   }
 
-  protocol.handle('app', handle)
   startSampling()
   setupUpdates()
   createWindow()

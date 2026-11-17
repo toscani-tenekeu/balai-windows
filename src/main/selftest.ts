@@ -1,3 +1,4 @@
+import { BrowserWindow } from 'electron'
 import { spawn } from 'node:child_process'
 import { mkdirSync, mkdtempSync, existsSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -20,7 +21,7 @@ import { ps } from './sys'
  * writes what came back, so a release is never built from code that was
  * only ever run on Linux.
  */
-export async function selfTest(output: string): Promise<number> {
+export async function selfTest(output: string, origin: string): Promise<number> {
   const report: Record<string, { ok: boolean; ms: number; sample?: unknown; error?: string }> = {}
   const fixtures: Record<string, unknown> = {}
 
@@ -163,6 +164,41 @@ export async function selfTest(output: string): Promise<number> {
   })
 
   await check('activity', async () => activity(), 'activity')
+
+  await check('pages', async () => {
+    const shots = `${output}-pages`
+    mkdirSync(shots, { recursive: true })
+    const window = new BrowserWindow({
+      width: 1280,
+      height: 860,
+      show: false,
+      webPreferences: { offscreen: true, contextIsolation: true, sandbox: true },
+    })
+    const problems: string[] = []
+    window.webContents.on('console-message', (...args: unknown[]) => {
+      const first = args[0] as { level?: string | number; message?: string }
+      const level = first.level ?? args[1]
+      const message = first.message ?? args[2]
+      if (level === 'error' || level === 3) problems.push(String(message))
+    })
+    window.webContents.on('render-process-gone', (_event, details) => problems.push(`renderer gone: ${details.reason}`))
+
+    const pages = ['', 'processes', 'startup', 'services', 'cleanup', 'disk', 'files', 'apps', 'ports', 'activity', 'settings']
+    for (const page of pages) {
+      await window.loadURL(`${origin}${page}`)
+      if (page === 'disk') {
+        await window.webContents.executeJavaScript(
+          "[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Open')?.click()",
+        )
+      }
+      await new Promise((resolve) => setTimeout(resolve, page === 'disk' || page === 'cleanup' || page === 'apps' ? 25_000 : 6_000))
+      const image = await window.webContents.capturePage()
+      writeFileSync(join(shots, `${page || 'overview'}.png`), image.toPNG())
+    }
+    window.destroy()
+    expect(!problems.length, `console errors: ${problems.join(' | ')}`)
+    return pages.length
+  })
 
   const failed = Object.entries(report).filter(([, value]) => !value.ok)
   writeFileSync(output, JSON.stringify({ failed: failed.map(([name]) => name), report, fixtures }, null, 2))

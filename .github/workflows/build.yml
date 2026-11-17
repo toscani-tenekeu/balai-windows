@@ -58,6 +58,7 @@ jobs:
           path: |
             selftest.json
             selftest.json.error
+            selftest.json-pages/
             electron.log
           if-no-files-found: ignore
 
