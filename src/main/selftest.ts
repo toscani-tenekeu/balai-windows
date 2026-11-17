@@ -136,7 +136,10 @@ export async function selfTest(output: string, origin: string): Promise<number> 
   })
 
   await check('startup-toggle', async () => {
-    await ps(`New-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run' -Name 'BalaiSelfTest' -Value 'C:\\Windows\\notepad.exe' -Force | Out-Null`)
+    await ps(`
+      $run = 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run'
+      if (-not (Test-Path -LiteralPath $run)) { New-Item -Path $run -Force | Out-Null }
+      New-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run' -Name 'BalaiSelfTest' -Value 'C:\\Windows\\notepad.exe' -Force | Out-Null`)
     try {
       const entry = (await listStartup()).find((item) => item.name === 'BalaiSelfTest')
       expect(entry?.enabled, 'test entry missing or off')

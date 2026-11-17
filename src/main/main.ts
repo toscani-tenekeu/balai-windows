@@ -1,7 +1,7 @@
-import { app, BrowserWindow, Menu, nativeTheme, net, protocol, shell } from 'electron'
+import { app, BrowserWindow, Menu, nativeTheme, protocol, shell } from 'electron'
 import { appendFileSync, existsSync } from 'node:fs'
-import { join, normalize } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { readFile } from 'node:fs/promises'
+import { extname, join, normalize } from 'node:path'
 import { api, json } from './api'
 import { openDatabase } from './db'
 import { startSampling } from './metrics'
@@ -11,6 +11,17 @@ import { setupUpdates } from './updater'
 
 const ORIGIN = 'app://balai'
 const rendererDir = join(__dirname, 'renderer')
+
+const TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
+  '.json': 'application/json',
+}
 
 const HEADERS = {
   'Content-Security-Policy':
@@ -72,10 +83,14 @@ async function handle(request: Request): Promise<Response> {
   const file = join(rendererDir, requested)
   const inside = file.startsWith(rendererDir)
   const target = inside && requested.length > 1 && existsSync(file) ? file : join(rendererDir, 'index.html')
-  const response = await net.fetch(pathToFileURL(target).toString())
-  const headers = new Headers(response.headers)
-  for (const [key, value] of Object.entries(HEADERS)) headers.set(key, value)
-  return new Response(response.body, { status: response.status, headers })
+  try {
+    const content = await readFile(target)
+    const type = TYPES[extname(target).toLowerCase()] ?? 'application/octet-stream'
+    return new Response(content, { headers: { ...HEADERS, 'Content-Type': type } })
+  } catch (error) {
+    console.error(error)
+    return new Response('Not found', { status: 404 })
+  }
 }
 
 function createWindow() {
