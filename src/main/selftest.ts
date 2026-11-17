@@ -175,7 +175,7 @@ export async function selfTest(output: string, origin: string): Promise<number> 
       width: 1280,
       height: 860,
       show: false,
-      webPreferences: { offscreen: true, contextIsolation: true, sandbox: true },
+      webPreferences: { offscreen: true, contextIsolation: true },
     })
     const problems: string[] = []
     window.webContents.on('console-message', (...args: unknown[]) => {
@@ -187,8 +187,9 @@ export async function selfTest(output: string, origin: string): Promise<number> 
     window.webContents.on('render-process-gone', (_event, details) => problems.push(`renderer gone: ${details.reason}`))
 
     const pages = ['', 'processes', 'startup', 'services', 'cleanup', 'disk', 'files', 'apps', 'ports', 'activity', 'settings']
+    window.webContents.on('did-fail-load', (_event, code, description, url) => problems.push(`${url}: ${code} ${description}`))
     for (const page of pages) {
-      await window.loadURL(`${origin}${page}`)
+      await window.loadURL(`${origin}${page}`).catch((error: Error) => problems.push(error.message))
       if (page === 'disk') {
         await window.webContents.executeJavaScript(
           "[...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Open')?.click()",

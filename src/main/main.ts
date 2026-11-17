@@ -40,6 +40,8 @@ if (testOutput) {
   app.disableHardwareAcceleration()
   app.commandLine.appendSwitch('disable-gpu')
   app.commandLine.appendSwitch('disable-gpu-sandbox')
+  // The build machine runs as a service account where Chromium's sandbox cannot start.
+  app.commandLine.appendSwitch('no-sandbox')
   // A self-test has no window to show an error in, so failures go to a file next to the report.
   const report = (error: unknown) => {
     try {
